@@ -11,6 +11,8 @@ namespace RPGConsole
     class Program
     {
         private static Thread InputThread { get; set; }
+        private static Stopwatch Timer { get; set; }
+        private static int Frame { get; set; }
         private static int Rows { get; set; }
         private static int Cols { get; set; }
 
@@ -27,6 +29,7 @@ namespace RPGConsole
         private static char foodChar = '*';
         private static bool wrapPlayer = false;
         private static bool redrawBox = true;
+        private static bool debug = false;
 
         //private static ConsoleColor defaultCharColour = ConsoleColor.White;
 
@@ -38,36 +41,43 @@ namespace RPGConsole
         {
             Setup();
 
-            Stopwatch stopwatch = new Stopwatch();
-            int frame = 0;
+            Frame = 0;
 
-            Debug.WriteLine($"Cols\t {Cols}");
-            Debug.WriteLine($"Rows\t {Rows}");
+            Timer = new Stopwatch();
 
             while (Running)
             {
-                //stopwatch.Start();
+                Timer.Start();
 
                 Update();
                 DrawGrid();
 
-                //stopwatch.Stop();
+                Timer.Stop();
 
-                frame++;
+                Frame++;
 
-                //Debug.WriteLine($"---------------------------------------");
-                //Debug.WriteLine($"Time:\t {stopwatch.ElapsedMilliseconds}");
-                //Debug.WriteLine($"Frame:\t {frame}");                
-                //Debug.WriteLine($"Player\t [x:{Player.x} y:{Player.y}]");
-                //Debug.WriteLine($"Food\t [x:{Food.x} y:{Food.y}]");
+                WriteDebug(debug);
 
-                //stopwatch.Reset();
+                Timer.Reset();
                 //Thread.Sleep(10);
             }
 
             Console.Clear();
             Console.WriteLine("Finished. Press Return to exit.");
             Console.ReadKey();
+        }
+
+        private static void WriteDebug(bool debug)
+        {
+            Debug.WriteLine($"---------------------------------------");
+            Debug.WriteLine($"Cols\t {Cols}");
+            Debug.WriteLine($"Rows\t {Rows}");
+            Debug.WriteLine($"---------------------------------------");
+            Debug.WriteLine($"Time:\t {Timer.ElapsedMilliseconds}ms");
+            Debug.WriteLine($"Frame:\t {Frame}");
+            Debug.WriteLine($"Player\t [x:{Player.x}, y:{Player.y}]");
+            Debug.WriteLine($"Food\t [x:{Food.x}, y:{Food.y}]");
+
         }
 
         private static void Setup()
