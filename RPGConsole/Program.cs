@@ -28,6 +28,8 @@ namespace RPGConsole
         private static string foodChar = "*";
         private static bool wrapPlayer = true;
 
+        private static ConsoleColor defaultCharColour = ConsoleColor.White;
+
         /// <summary>
         /// Main entry point 
         /// </summary>
@@ -36,10 +38,36 @@ namespace RPGConsole
         {
             Setup();
 
+            Stopwatch stopwatch = new Stopwatch();
+            int frame = 0;
+
+            Debug.WriteLine($"Cols\t {Cols}");
+                Debug.WriteLine($"Rows\t {Rows}");
+
             while (Running)
             {
+                stopwatch.Start();
+
                 Update();
                 DrawGrid();
+
+                stopwatch.Stop();
+
+                frame++;
+
+                Debug.WriteLine($"---------------------------------------");
+                Debug.WriteLine($"Time:\t {stopwatch.ElapsedMilliseconds}");
+                Debug.WriteLine($"Frame:\t {frame}");                
+                Debug.WriteLine($"Player\t [x:{Player.x} y:{Player.y}]");
+                Debug.WriteLine($"Food\t [x:{Food.x} y:{Food.y}]");
+
+                if (frame == 60)
+                {
+                    frame = 0;
+                }
+
+                stopwatch.Reset();
+                Thread.Sleep(10);
             }
 
             Console.Clear();
@@ -49,13 +77,12 @@ namespace RPGConsole
 
         private static void Setup()
         {
-            Running = true;
+
+            Console.WindowHeight = 40;
+            Console.WindowWidth = 40;
 
             Rows = Console.WindowHeight - 0;
             Cols = Console.WindowWidth - 1;
-
-            Debug.WriteLine($"Cols\t {Cols}");
-            Debug.WriteLine($"Rows\t {Rows}");
 
             if (Player == null) Player = new VecC(Cols / 2, Rows / 2);
             if (Food == null) Food = VecC.GetRandomVector();
@@ -66,6 +93,8 @@ namespace RPGConsole
             InputThread = new Thread(() => GetUserInput());
             InputThread.IsBackground = true;
             InputThread.Start();
+
+            Running = true;
 
             DrawGrid();
         }
@@ -78,19 +107,19 @@ namespace RPGConsole
             switch (input.Key)
             {
                 case ConsoleKey.UpArrow:
-                    Player.velocity = VecC.Velocity.UP;
+                    Player.velocity = VecC.Velocity.NORTH;
                     break;
 
                 case ConsoleKey.DownArrow:
-                    Player.velocity = VecC.Velocity.DOWN;
+                    Player.velocity = VecC.Velocity.SOUTH;
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    Player.velocity = VecC.Velocity.LEFT;
+                    Player.velocity = VecC.Velocity.WEST;
                     break;
 
                 case ConsoleKey.RightArrow:
-                    Player.velocity = VecC.Velocity.RIGHT;
+                    Player.velocity = VecC.Velocity.EAST;
                     break;
 
                 case ConsoleKey.Escape:
@@ -144,13 +173,12 @@ namespace RPGConsole
                     // Draw the player
                     else if (vec.x == Player.x && vec.y == Player.y)
                     {
-                        WriteAt(playerChar, x, y);
-
+                        WriteAt(playerChar, x, y, ConsoleColor.Gray);
                     }
                     // Draw the food
                     else if (vec.x == Food.x && vec.y == Food.y)
                     {
-                        WriteAt(foodChar, x, y);
+                        WriteAt(foodChar, x, y, ConsoleColor.Green);
                     }
                     // Draw whitespace
                     else
@@ -160,26 +188,35 @@ namespace RPGConsole
                 }
             }
 
-            Debug.WriteLine($"Player\t [x:{Player.x} y:{Player.y}]");
-            Debug.WriteLine($"Food\t [x:{Food.x} y:{Food.y}]");
         }
 
 
-        protected static void WriteAt(string s, int x, int y)
+        protected static void WriteAt(string s, int x, int y, ConsoleColor colour = ConsoleColor.White)
         {
             OrigRow = 0;
             OrigCol = 0;
 
+            //Console.ForegroundColor = color;
+
             try
             {
                 Console.SetCursorPosition(OrigCol + x, OrigRow + y);
+
+                if (colour != ConsoleColor.White) Console.ForegroundColor = colour;
+
                 Console.Write(s);
+
+                if (colour != ConsoleColor.White) Console.ForegroundColor = ConsoleColor.White;
+
             }
             catch (ArgumentOutOfRangeException e)
             {
                 Console.Clear();
                 Console.WriteLine(e.Message);
             }
+
+            //Console.ForegroundColor = ConsoleColor.White;
+
         }
 
 
@@ -191,7 +228,7 @@ namespace RPGConsole
 
             public enum Velocity
             {
-                UP, DOWN, LEFT, RIGHT
+                NONE, NORTH, SOUTH, WEST, EAST
             }
 
             public VecC(int x, int y)
@@ -209,17 +246,21 @@ namespace RPGConsole
             {
                 switch (velocity)
                 {
-                    case Velocity.UP:
+                    case Velocity.NORTH:
                         Player.y -= 1;
                         break;
-                    case Velocity.DOWN:
+                    case Velocity.SOUTH:
                         Player.y += 1;
                         break;
-                    case Velocity.LEFT:
+                    case Velocity.WEST:
                         Player.x -= 1;
                         break;
-                    case Velocity.RIGHT:
+                    case Velocity.EAST:
                         Player.x += 1;
+                        break;
+                    case Velocity.NONE:
+                        Player.x += 0;
+                        Player.y += 0;
                         break;
                     default:
                         break;
@@ -228,7 +269,7 @@ namespace RPGConsole
 
             public void CheckWallCollision()
             {
-                if (Player.x <= 1) Player.x = wrapPlayer ? Cols - 2 : 2;
+                if (Player.x <= 0) Player.x = wrapPlayer ? Cols - 2 : 2;
                 if (Player.x >= Cols - 1) Player.x = wrapPlayer ? 2 : Cols - 1;
 
                 if (Player.y <= 0) Player.y = wrapPlayer ? Rows - 2 : 1;
