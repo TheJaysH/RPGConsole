@@ -22,9 +22,9 @@ namespace RPGConsole
 
         private static bool Running { get; set; }
 
-        private static string blankChar = " ";
-        private static string playerChar = "#";
-        private static string foodChar = "^";
+        private static char blankChar = ' ';
+        private static char playerChar = '#';
+        private static char foodChar = '*';
         private static bool wrapPlayer = false;
         private static bool redrawBox = true;
 
@@ -73,8 +73,8 @@ namespace RPGConsole
         private static void Setup()
         {
 
-            //Console.WindowHeight = 40;
-            //Console.WindowWidth = 40;
+            Console.WindowHeight = 35;
+            Console.WindowWidth = 80;
 
             Rows = Console.WindowHeight - 0;
             Cols = Console.WindowWidth - 1;
@@ -129,15 +129,14 @@ namespace RPGConsole
 
         private static void Update()
         {
-
             Player.UpdatePosition();
             Player.CheckWallCollision();
+            //Player.Bounce();
 
             if (Player.HasColliedWith(Food))
             {                
                 Food = VecC.GetRandomVector();                
             }
-
         }
 
         private static void DrawGrid()
@@ -156,17 +155,17 @@ namespace RPGConsole
                     // Draw `+` if cursor in any corner.
                     if ((x == 0 && y == 0) || (x == Cols - 1 && y == 0) || (x == Cols - 1 && y == Rows - 1) || (x == 0 && y == Rows - 1))
                     {
-                        WriteAt("+", x, y);
+                        WriteAt('+', x, y);
                     }
                     // Draw `|` if left or right side
                     else if (x == 0 || x == Cols - 1)
                     {
-                        WriteAt("|", x, y);
+                        WriteAt('|', x, y);
                     }
                     // Draw `-` if top or bottom row
                     else if (y == 0 || y == Rows - 1)
                     {
-                        WriteAt("-", x, y);
+                        WriteAt('-', x, y);
 
                     }
                     // Draw the player
@@ -190,10 +189,8 @@ namespace RPGConsole
         }
 
 
-        protected static void WriteAt(string s, int x, int y, ConsoleColor colour = ConsoleColor.White)
+        protected static void WriteAt(char s, int x, int y, ConsoleColor colour = ConsoleColor.White)
         {
-            OrigRow = 0;
-            OrigCol = 0;
 
             try
             {
@@ -211,7 +208,6 @@ namespace RPGConsole
                 Console.Clear();
                 Console.WriteLine(e.Message);
             }
-
         }
 
     
@@ -223,7 +219,15 @@ namespace RPGConsole
 
             public enum Velocity
             {
-                NONE, NORTH, SOUTH, WEST, EAST
+                NONE,
+                NORTH,
+                NORTH_EAST,
+                EAST,
+                SOUTH_EAST,
+                SOUTH,
+                SOUTH_WEST,
+                WEST,
+                NORTH_WEST
             }
 
             public VecC(int x, int y)
@@ -244,14 +248,30 @@ namespace RPGConsole
                     case Velocity.NORTH:
                         Player.y -= 1;
                         break;
+                    case Velocity.NORTH_EAST:
+                        Player.y -= 1;
+                        Player.x += 1;
+                        break;
+                    case Velocity.EAST:
+                        Player.x += 1;
+                        break;
+                    case Velocity.SOUTH_EAST:
+                        Player.y += 1;
+                        Player.x += 1;
+                        break;
                     case Velocity.SOUTH:
                         Player.y += 1;
+                        break;
+                    case Velocity.SOUTH_WEST:
+                        Player.y += 1;
+                        Player.x -= 1;
                         break;
                     case Velocity.WEST:
                         Player.x -= 1;
                         break;
-                    case Velocity.EAST:
-                        Player.x += 1;
+                    case Velocity.NORTH_WEST:
+                        Player.x -= 1;
+                        Player.y -= 1;
                         break;
                     case Velocity.NONE:
                         Player.x += 0;
@@ -270,6 +290,18 @@ namespace RPGConsole
                 if (Player.y <= 0) Player.y = wrapPlayer ? Rows - 2 : 1;
                 if (Player.y >= Rows - 1) Player.y = wrapPlayer ? 1 : Rows - 2;
             }
+
+            //public void Bounce()
+            //{
+            //    if (Player.x <= 0) Player.velocity = Velocity.EAST;
+            //    if (Player.x >= Cols - 1) Player.velocity = Velocity.WEST;
+
+            //    if (Player.x <= 0 && Player.y < Rows / 2) Player.velocity = Velocity.NORTH_EAST;
+            //    if (Player.x >= Cols - 1 && Player.y > Rows / 2) Player.velocity = Velocity.SOUTH_EAST;
+
+            //    if (Player.y <= 0) Player.y = Player.y + 1;
+            //    if (Player.y >= Rows - 1) Player.y = Player.y - 1;
+            //}
 
             public static VecC GetRandomVector()
             {
