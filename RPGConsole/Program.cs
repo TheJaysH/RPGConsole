@@ -13,7 +13,6 @@ namespace RPGConsole
         private static Thread InputThread { get; set; }
         private static int Rows { get; set; }
         private static int Cols { get; set; }
-        private static int Cells { get; set; }
 
         private static VecC Player { get; set; }
         private static VecC Food { get; set; }
@@ -25,10 +24,11 @@ namespace RPGConsole
 
         private static string blankChar = " ";
         private static string playerChar = "#";
-        private static string foodChar = "*";
-        private static bool wrapPlayer = true;
+        private static string foodChar = "^";
+        private static bool wrapPlayer = false;
+        private static bool redrawBox = true;
 
-        private static ConsoleColor defaultCharColour = ConsoleColor.White;
+        //private static ConsoleColor defaultCharColour = ConsoleColor.White;
 
         /// <summary>
         /// Main entry point 
@@ -42,32 +42,27 @@ namespace RPGConsole
             int frame = 0;
 
             Debug.WriteLine($"Cols\t {Cols}");
-                Debug.WriteLine($"Rows\t {Rows}");
+            Debug.WriteLine($"Rows\t {Rows}");
 
             while (Running)
             {
-                stopwatch.Start();
+                //stopwatch.Start();
 
                 Update();
                 DrawGrid();
 
-                stopwatch.Stop();
+                //stopwatch.Stop();
 
                 frame++;
 
-                Debug.WriteLine($"---------------------------------------");
-                Debug.WriteLine($"Time:\t {stopwatch.ElapsedMilliseconds}");
-                Debug.WriteLine($"Frame:\t {frame}");                
-                Debug.WriteLine($"Player\t [x:{Player.x} y:{Player.y}]");
-                Debug.WriteLine($"Food\t [x:{Food.x} y:{Food.y}]");
+                //Debug.WriteLine($"---------------------------------------");
+                //Debug.WriteLine($"Time:\t {stopwatch.ElapsedMilliseconds}");
+                //Debug.WriteLine($"Frame:\t {frame}");                
+                //Debug.WriteLine($"Player\t [x:{Player.x} y:{Player.y}]");
+                //Debug.WriteLine($"Food\t [x:{Food.x} y:{Food.y}]");
 
-                if (frame == 60)
-                {
-                    frame = 0;
-                }
-
-                stopwatch.Reset();
-                Thread.Sleep(10);
+                //stopwatch.Reset();
+                //Thread.Sleep(10);
             }
 
             Console.Clear();
@@ -78,8 +73,8 @@ namespace RPGConsole
         private static void Setup()
         {
 
-            Console.WindowHeight = 40;
-            Console.WindowWidth = 40;
+            //Console.WindowHeight = 40;
+            //Console.WindowWidth = 40;
 
             Rows = Console.WindowHeight - 0;
             Cols = Console.WindowWidth - 1;
@@ -87,8 +82,7 @@ namespace RPGConsole
             if (Player == null) Player = new VecC(Cols / 2, Rows / 2);
             if (Food == null) Food = VecC.GetRandomVector();
 
-            Cells = Cols * Rows;
-
+           
             // Start the input thread
             InputThread = new Thread(() => GetUserInput());
             InputThread.IsBackground = true;
@@ -140,14 +134,20 @@ namespace RPGConsole
             Player.CheckWallCollision();
 
             if (Player.HasColliedWith(Food))
-            {
-                Food = VecC.GetRandomVector();
+            {                
+                Food = VecC.GetRandomVector();                
             }
 
         }
 
         private static void DrawGrid()
         {
+            if (redrawBox && (Console.WindowWidth - 1 != Cols || Console.WindowHeight - 0 != Rows))
+            {
+                Rows = Console.WindowHeight - 0;
+                Cols = Console.WindowWidth - 1;
+            }
+
             for (int x = 0; x < Cols; x++)
             {
                 for (int y = 0; y < Rows; y++)
@@ -157,7 +157,6 @@ namespace RPGConsole
                     if ((x == 0 && y == 0) || (x == Cols - 1 && y == 0) || (x == Cols - 1 && y == Rows - 1) || (x == 0 && y == Rows - 1))
                     {
                         WriteAt("+", x, y);
-
                     }
                     // Draw `|` if left or right side
                     else if (x == 0 || x == Cols - 1)
@@ -173,7 +172,7 @@ namespace RPGConsole
                     // Draw the player
                     else if (vec.x == Player.x && vec.y == Player.y)
                     {
-                        WriteAt(playerChar, x, y, ConsoleColor.Gray);
+                        WriteAt(playerChar, x, y, ConsoleColor.Cyan);
                     }
                     // Draw the food
                     else if (vec.x == Food.x && vec.y == Food.y)
@@ -196,8 +195,6 @@ namespace RPGConsole
             OrigRow = 0;
             OrigCol = 0;
 
-            //Console.ForegroundColor = color;
-
             try
             {
                 Console.SetCursorPosition(OrigCol + x, OrigRow + y);
@@ -215,12 +212,10 @@ namespace RPGConsole
                 Console.WriteLine(e.Message);
             }
 
-            //Console.ForegroundColor = ConsoleColor.White;
-
         }
 
-
-        class VecC
+    
+        public class VecC
         {
             public int x { get; set; }
             public int y { get; set; }
@@ -269,8 +264,8 @@ namespace RPGConsole
 
             public void CheckWallCollision()
             {
-                if (Player.x <= 0) Player.x = wrapPlayer ? Cols - 2 : 2;
-                if (Player.x >= Cols - 1) Player.x = wrapPlayer ? 2 : Cols - 1;
+                if (Player.x <= 0) Player.x = wrapPlayer ? Cols - 2 : 1;
+                if (Player.x >= Cols - 1) Player.x = wrapPlayer ? 2 : Cols - 2;
 
                 if (Player.y <= 0) Player.y = wrapPlayer ? Rows - 2 : 1;
                 if (Player.y >= Rows - 1) Player.y = wrapPlayer ? 1 : Rows - 2;
