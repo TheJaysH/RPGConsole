@@ -29,7 +29,7 @@ namespace RPGConsole
         private static bool wrapPlayer = true;
 
         /// <summary>
-        /// 
+        /// Main entry point 
         /// </summary>
         /// <param name="args"></param>
         static void Main(string[] args)
