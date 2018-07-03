@@ -28,6 +28,10 @@ namespace RPGConsole
         private static string foodChar = "*";
         private static bool wrapPlayer = true;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             Setup();
