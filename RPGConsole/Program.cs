@@ -24,10 +24,14 @@ namespace RPGConsole
 
         private static bool Running { get; set; }
 
-        private static char blankChar = ' ';
+        private static int width = 80;
+        private static int height = 35;
+
+        private static int playerSpeed = 1;
         private static char playerChar = '#';
+        private static char blankChar = ' ';        
         private static char foodChar = '*';
-        private static bool wrapPlayer = false;
+        private static bool wrapPlayer = true;
         private static bool redrawBox = true;
         private static bool debug = false;
 
@@ -37,7 +41,7 @@ namespace RPGConsole
         /// Main entry point 
         /// </summary>
         /// <param name="args"></param>
-        static void Main(string[] args)
+        static void Main()
         {
             Setup();
 
@@ -47,17 +51,25 @@ namespace RPGConsole
 
             while (Running)
             {
+                // Start the frame timer
                 Timer.Start();
 
+                // Update vectors
                 Update();
+
+                // draw each x y on the grid
                 DrawGrid();
 
+                // Stop frame timer
                 Timer.Stop();
 
+                // Incrament frames
                 Frame++;
 
+                // Display debug info (if set)
                 WriteDebug(debug);
 
+                // Reset Frame Time
                 Timer.Reset();
                 //Thread.Sleep(10);
             }
@@ -67,24 +79,14 @@ namespace RPGConsole
             Console.ReadKey();
         }
 
-        private static void WriteDebug(bool debug)
-        {
-            Debug.WriteLine($"---------------------------------------");
-            Debug.WriteLine($"Cols\t {Cols}");
-            Debug.WriteLine($"Rows\t {Rows}");
-            Debug.WriteLine($"---------------------------------------");
-            Debug.WriteLine($"Time:\t {Timer.ElapsedMilliseconds}ms");
-            Debug.WriteLine($"Frame:\t {Frame}");
-            Debug.WriteLine($"Player\t [x:{Player.x}, y:{Player.y}]");
-            Debug.WriteLine($"Food\t [x:{Food.x}, y:{Food.y}]");
-
-        }
-
+        /// <summary>
+        /// Intial setup Method
+        /// Will setup console size, and initial vector positions
+        /// </summary>
         private static void Setup()
         {
-
-            Console.WindowHeight = 35;
-            Console.WindowWidth = 80;
+            Console.WindowHeight = height;
+            Console.WindowWidth = width;
 
             Rows = Console.WindowHeight - 0;
             Cols = Console.WindowWidth - 1;
@@ -103,6 +105,9 @@ namespace RPGConsole
             DrawGrid();
         }
 
+        /// <summary>
+        /// [THREADED] recurcive method to check for user input
+        /// </summary>
         private static void GetUserInput()
         {
             var input = Console.ReadKey(true);
@@ -130,6 +135,10 @@ namespace RPGConsole
                     Running = false;
                     break;
 
+                case ConsoleKey.R:
+                    ResetConsole();
+                    break;
+
                 default:
                     break;
             }
@@ -137,8 +146,19 @@ namespace RPGConsole
             GetUserInput();
         }
 
+        private static void ResetConsole()
+        {
+            InputThread.Abort();
+            Running = false;
+            Main();
+        }
+
+        /// <summary>
+        /// Update Vector Info
+        /// </summary>
         private static void Update()
         {
+            //Player.RandomWalk();
             Player.UpdatePosition();
             Player.CheckWallCollision();
             //Player.Bounce();
@@ -149,6 +169,10 @@ namespace RPGConsole
             }
         }
 
+        /// <summary>
+        /// Main Draw Method
+        /// Gets total rows & cols. loops through both, and draws chars at each x,y
+        /// </summary>
         private static void DrawGrid()
         {
             if (redrawBox && (Console.WindowWidth - 1 != Cols || Console.WindowHeight - 0 != Rows))
@@ -198,10 +222,15 @@ namespace RPGConsole
 
         }
 
-
+        /// <summary>
+        /// Write a a specific position on the console
+        /// </summary>
+        /// <param name="s">Charater to write</param>
+        /// <param name="x">X coordinate</param>
+        /// <param name="y">Y coordinate</param>
+        /// <param name="colour">Charater color</param>
         protected static void WriteAt(char s, int x, int y, ConsoleColor colour = ConsoleColor.White)
         {
-
             try
             {
                 Console.SetCursorPosition(OrigCol + x, OrigRow + y);
@@ -220,7 +249,21 @@ namespace RPGConsole
             }
         }
 
-    
+        private static void WriteDebug(bool debug)
+        {
+            Debug.WriteLine($"---------------------------------------");
+            Debug.WriteLine($"Cols\t {Cols}");
+            Debug.WriteLine($"Rows\t {Rows}");
+            Debug.WriteLine($"---------------------------------------");
+            Debug.WriteLine($"Time:\t {Timer.ElapsedMilliseconds}ms");
+            Debug.WriteLine($"Frame:\t {Frame}");
+            Debug.WriteLine($"Player\t [x:{Player.x}, y:{Player.y}]");
+            Debug.WriteLine($"Food\t [x:{Food.x}, y:{Food.y}]");
+        }
+
+        /// <summary>
+        /// My custom Vector Class
+        /// </summary>
         public class VecC
         {
             public int x { get; set; }
@@ -251,37 +294,40 @@ namespace RPGConsole
                 return (x == vec.x && y == vec.y);
             }
 
+            /// <summary>
+            /// Update the player postion via Player Velocity
+            /// </summary>
             public void UpdatePosition()
             {
                 switch (velocity)
                 {
                     case Velocity.NORTH:
-                        Player.y -= 1;
+                        Player.y -= playerSpeed;
                         break;
                     case Velocity.NORTH_EAST:
-                        Player.y -= 1;
-                        Player.x += 1;
+                        Player.y -= playerSpeed;
+                        Player.x += playerSpeed;
                         break;
                     case Velocity.EAST:
-                        Player.x += 1;
+                        Player.x += playerSpeed;
                         break;
                     case Velocity.SOUTH_EAST:
-                        Player.y += 1;
-                        Player.x += 1;
+                        Player.y += playerSpeed;
+                        Player.x += playerSpeed;
                         break;
                     case Velocity.SOUTH:
-                        Player.y += 1;
+                        Player.y += playerSpeed;
                         break;
                     case Velocity.SOUTH_WEST:
-                        Player.y += 1;
-                        Player.x -= 1;
+                        Player.y += playerSpeed;
+                        Player.x -= playerSpeed;
                         break;
                     case Velocity.WEST:
-                        Player.x -= 1;
+                        Player.x -= playerSpeed;
                         break;
                     case Velocity.NORTH_WEST:
-                        Player.x -= 1;
-                        Player.y -= 1;
+                        Player.x -= playerSpeed;
+                        Player.y -= playerSpeed;
                         break;
                     case Velocity.NONE:
                         Player.x += 0;
@@ -292,12 +338,30 @@ namespace RPGConsole
                 }
             }
 
+            /// <summary>
+            /// Will pick a random vector for the Player to walk
+            /// </summary>
+            public void RandomWalk()
+            {
+                Array values = Enum.GetValues(typeof(Velocity));
+                Random random = new Random();
+                Velocity velocity = (Velocity)values.GetValue(random.Next(values.Length));
+
+                Player.velocity = velocity;
+            }
+
             public void CheckWallCollision()
             {
+                // Player is very left hand side
                 if (Player.x <= 0) Player.x = wrapPlayer ? Cols - 2 : 1;
+
+                // Player is very right hand side
                 if (Player.x >= Cols - 1) Player.x = wrapPlayer ? 2 : Cols - 2;
 
+                // Player is very top
                 if (Player.y <= 0) Player.y = wrapPlayer ? Rows - 2 : 1;
+
+                // Player is very bottom
                 if (Player.y >= Rows - 1) Player.y = wrapPlayer ? 1 : Rows - 2;
             }
 
